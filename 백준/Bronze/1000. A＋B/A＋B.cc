@@ -15,7 +15,7 @@ using namespace __gnu_cxx;
 using namespace std;
 
 typedef long long ll;
-//typedef __int128 i128;
+typedef __int128 i128;
 typedef long double ld;
 const int INF = 0x3f3f3f3f;
 const double EPS = 1e-9;
@@ -27,8 +27,15 @@ int main() {
     cin.tie(NULL);
     cout.tie(NULL);
 
-    for(ll i=0; i<1e12; i++){
+    ll ans=0;
 
+    for(i128 i=0; i<1e16*1e16; i++){
+        if(1){
+            ll a=i;
+            ll b=i;
+            a+=b;
+            ans+=a;
+        }
     }
     int a, b;
     cin >> a >> b;
