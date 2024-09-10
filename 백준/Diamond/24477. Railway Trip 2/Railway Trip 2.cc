@@ -23,62 +23,109 @@ const double EPS = 1e-9;
 const ll LNF = 1e18;
 const ll mod = 998244353;
 
-vector<vector<pii>> seg(20, vector<pii>(400005, {1e9, -1e9}));
-vector<vector<pii>> lazy(20, vector<pii>(400005, {1e9, -1e9}));
-
-inline pii mergepair(pii A, pii B){
-    return {min(A.first, B.first), max(A.second, B.second)};
-}
-
-void LazyUpdate(int node, int start, int end, int num){
-    //cout << node << " " << start << " " << end << " " << num << "\n";
-    //cout << lazy[num][node].first << " " << lazy[num][node].second << "\n";
-    if(lazy[num][node].first!=1e9||lazy[num][node].second!=-1e9){
-        seg[num][node]=mergepair(seg[num][node], lazy[num][node]);
-        //cout << seg[num][node].first << " " << seg[num][node].second << "\n";
-        if(start!=end){
-            lazy[num][node*2]=mergepair(lazy[num][node*2], lazy[num][node]);
-            lazy[num][node*2+1]=mergepair(lazy[num][node*2+1], lazy[num][node]);
+template<typename Node, typename Lazy,
+         typename Node2Node, typename Lazy2Node, typename Lazy2Lazy>
+struct LazySeg { // 1-indexed
+public:
+    LazySeg() : LazySeg(0, Node(), Lazy()) {}
+    explicit LazySeg(int n, const Node& nodeid, const Lazy& lazyid)
+        : n(n), nodeid(nodeid), lazyid(lazyid), lg(Log2(n)), sz(1 << lg), seg(sz << 1, nodeid), lazy(sz, lazyid) {}
+    void Set(int i, const Node& val) { //cout << i << " " << val.val1 << " " << val.val2 << endl; 
+    seg[--i | sz] = val; }  // 초기값 할당
+    void Init() { for (int i = sz - 1; i; --i) seg[i] = N2N(seg[i << 1], seg[i << 1 | 1]); }  // 초기화
+    void Update(int i, const Lazy& x) {  // point update
+        --i |= sz;
+        for (int j = lg; j; --j) Down(i >> j);
+        LazyProp(i, x);
+        for (int j = 1; j <= lg; ++j) Up(i >> j);
+    }
+    void Update(int l, int r, const Lazy& x) {  // range update
+        --l |= sz, --r |= sz;
+        for (int i = lg; i; --i) {
+            if (l >> i << i != l) Down(l >> i);
+            if (r + 1 >> i << i != r + 1) Down(r >> i);
         }
-        lazy[num][node]={1e9, -1e9};
-    }   
-}
-
-void updateseg(int node, int start, int end, int num, int left, int right, int val1, int val2){
-    LazyUpdate(node, start, end, num);
-    if(right<start||end<left) return;
-    else if(left<=start&&end<=right){
-        lazy[num][node]=mergepair(lazy[num][node], {val1, val2});
-        //cout << lazy[num][node].first << " " << lazy[num][node].second << "\n";
-        LazyUpdate(node, start, end, num);
-        //cout << node << " " << seg[num][node].first << " " << seg[num][node].second << "\n";
+        for (int L = l, R = r; L <= R; L >>= 1, R >>= 1) {
+            if (L & 1) LazyProp(L++, x);
+            if (~R & 1) LazyProp(R--, x);
+        }
+        for (int i = 1; i <= lg; ++i) {
+            if (l >> i << i != l) Up(l >> i);
+            if (r + 1 >> i << i != r + 1) Up(r >> i);
+        }
     }
-    else{
-        int mid=(start+end)/2;
-        updateseg(node*2, start, mid, num, left, right, val1, val2);
-        updateseg(node*2+1, mid+1, end, num, left, right, val1, val2);
-        seg[num][node]=mergepair(seg[num][node], mergepair(seg[num][node*2], seg[num][node*2+1]));
+    Node Query(int i) {  // point query
+        --i |= sz;
+        for (int j = lg; j; --j) Down(i >> j);
+        return seg[i];
     }
-    return;
-}
-
-pii sumseg(int node, int start, int end, int num, int left, int right){
-    //cout << node << " " << start << " " << end << " " << num << " " << seg[node][num].first << " " << seg[node][num].second << "\n";
-    LazyUpdate(node, start, end, num);
-    if(right<start||end<left) return {1e9, -1e9};
-    else if(left<=start&&end<=right){
-        //cout << node << " " << start << " " << end << " " << num << " " << seg[num][num].first << " " << seg[node][num].second << "\n";
-        return seg[num][node];
+    Node Query(int l, int r) {  // range query
+        --l |= sz, --r |= sz;
+        Node ret = nodeid;
+        for (int i = lg; i; --i) {
+            if (l >> i << i != l) Down(l >> i);
+            if (r + 1 >> i << i != r + 1) Down(r >> i);
+        }
+        for (; l <= r; l >>= 1, r >>= 1) {
+            if (l & 1) ret = N2N(ret, seg[l++]);
+            if (~r & 1) ret = N2N(ret, seg[r--]);
+        }
+        return ret;
     }
-    else{
-        int mid=(start+end)/2;
-        return mergepair(sumseg(node*2, start, mid, num, left, right), sumseg(node*2+1, mid+1, end, num, left, right));
+private:
+    const int n, lg, sz;
+    const Node nodeid; const Lazy lazyid;
+    vector<Node> seg; vector<Lazy> lazy;
+    Node2Node N2N; Lazy2Node L2N; Lazy2Lazy L2L;
+    static int Log2(int n) {
+        int ret = 0;
+        while (n > 1 << ret) ret++;
+        return ret;
     }
-}   
+    void LazyProp(int i, const Lazy& x) {
+        seg[i] = L2N(x, seg[i]);
+        if (i < sz) lazy[i] = L2L(x, lazy[i]);
+    }
+    void Down(int i) {
+        LazyProp(i << 1, lazy[i]);
+        LazyProp(i << 1 | 1, lazy[i]);
+        lazy[i] = lazyid;
+    }
+    void Up(int i) {
+        seg[i] = N2N(seg[i << 1], seg[i << 1 | 1]);
+    }
+};
+struct Node {  // 세그먼트 트리 노드 자료형 정의
+    int val1, val2;
+    Node() : Node(1e9, -1e9) {}
+    constexpr Node(int val1, int val2) : val1(val1), val2(val2) {}
+};
+constexpr Node nodeid(1e9, -1e9);  // 노드 항등원
+struct Lazy {  // 레이지 자료형 정의
+    int val1, val2;
+    Lazy() : Lazy(1e9, -1e9) {}
+    constexpr Lazy(int val1, int val2) : val1(val1), val2(val2) {}
+};
+constexpr Lazy lazyid(1e9, -1e9);  // 레이지 항등원
+struct Node2Node {  // 노드 연산 (구간 쿼리에 사용)
+    Node operator() (const Node& a, const Node& b) const {
+        return { min(a.val1, b.val1), max(a.val2, b.val2) };
+    }
+};
+struct Lazy2Node {  // 레이지를 노드에 적용하는 연산
+    Node operator() (const Lazy& a, const Node& b) const {
+        return { min(a.val1, b.val1), max(a.val2, b.val2) };
+    }
+};
+struct Lazy2Lazy {  // 레이지를 전파할 때 기존 레이지와 전파된 레이지의 연산
+    Lazy operator() (const Lazy& a, const Lazy& b) const {
+        return { min(a.val1, b.val1), max(a.val2, b.val2) };
+    }
+};
 
-pll sparsetable[100005][20];
+pii sparsetable[18][100005];
 
-signed main(){
+int main(){
     ios::sync_with_stdio(false);
     cin.tie(NULL);
     cout.tie(NULL);
@@ -88,38 +135,43 @@ signed main(){
     int M;
     cin >> M;
 
-    for(int i=0; i<20; i++){
-        for(int j=1; j<=N; j++){
-            updateseg(1, 1, N, i, j, j, j, j);
-            //cout << seg[0][8].first << " " << seg[0][8].second << "\n";
-            //cout << i << " " << j << " " << sumseg(1, 1, N, i, j, j).first << " " << sumseg(1, 1, N, i, j, j).second << "\n";
-        }
+    vector<LazySeg<Node, Lazy, Node2Node, Lazy2Node, Lazy2Lazy>> LS(18, LazySeg<Node, Lazy, Node2Node, Lazy2Node, Lazy2Lazy>(N, nodeid, lazyid));
+
+    for(int i=1; i<18; i++){
+        LS[i].Init();
     }
+
 
     for(int i=0; i<M; i++){
         int a, b;
         cin >> a >> b;
         if(a<b){
-            updateseg(1, 1, N, 0, a, min(a+K-1, b), 1e9, b);
+            LS[0].Update(a, min(a+K-1, b), Lazy(1e9, b));
         }
         else{
-            updateseg(1, 1, N, 0, max(a-K+1, b), a, b, -1e9);
+            LS[0].Update(max(a-K+1, b), a, Lazy(b, -1e9));
         }
     }
 
     for(int i=1; i<=N; i++){
-        sparsetable[i][0]=sumseg(1, 1, N, 0, i, i);
-        //cout << i << " " << sparsetable[i][0].first << " " << sparsetable[i][0].second << "\n";
+        sparsetable[0][i]={min(LS[0].Query(i, i).val1, i), max(LS[0].Query(i, i).val2, i)};
+        //cout << i << " " << sparsetable[i][0].first << " " << sparsetable[i][0].second << endl;
     }
 
-    for(int i=1; i<20; i++){
+    for(int i=1; i<18; i++){
+        //cout << i << endl;
         for(int j=1; j<=N; j++){
-            sparsetable[j][i]=sumseg(1, 1, N, i-1, sparsetable[j][i-1].first, sparsetable[j][i-1].second);
+            //cout << j << endl;
+            Node A=LS[i-1].Query(sparsetable[i-1][j].first, sparsetable[i-1][j].second);
+            sparsetable[i][j]={min(A.val1, j), max(A.val2, j)};
+            //cout << sparsetable[j][i].first << " " << sparsetable[j][i].second << endl;
         }
         for(int j=1; j<=N; j++){
-            updateseg(1, 1, N, i, j, j, sparsetable[j][i].first, sparsetable[j][i].second);
+            LS[i].Update(j, Lazy(sparsetable[i][j].first, sparsetable[i][j].second));
         }
     }
+
+    //cout << "!" << endl;
 
     int Q;
     cin >> Q;
@@ -127,16 +179,31 @@ signed main(){
         int S, T;
         cin >> S >> T;
         int left=0;
-        int right=M+5;
-        int ans=987654321;
-        while(left<=right){
+        int right=M;
+        pii a={S, S};
+        Node A=LS[17].Query(a.first, a.second);
+        if(min(A.val1, a.first)>T||max(A.val2, a.second)<T){
+            cout << -1 << "\n";
+            continue;
+        }
+        ll ans=0;
+        for(int i=16; i>=0; i--){
+            Node A=LS[i].Query(a.first, a.second);
+            if(min(a.first, A.val1)<=T&&max(a.second, A.val2)>=T) continue;
+            ans+=(1ll<<i);
+            a.first=min(a.first, A.val1);
+            a.second=max(a.second, A.val2);
+        }
+        cout << ans+1 << "\n";
+        /*while(left<=right){
             int mid=(left+right)/2;
             int temp=mid;
-            pll a={S, S};
+            pii a={S, S};
             int i=0;
             while(temp!=0){
                 if((temp&1)!=0){
-                    a=sumseg(1, 1, N, i, a.first, a.second);
+                    Node A=LS[i].Query(a.first, a.second);
+                    a={min(A.val1, a.first), max(A.val2, a.second)};
                 }
                 i++;
                 temp>>=1;
@@ -148,7 +215,7 @@ signed main(){
             else left=mid+1;
         }
         if(ans==987654321) cout << -1 << "\n";
-        else cout << ans << "\n";
+        else cout << ans << "\n";*/
     }
 
     return 0;
