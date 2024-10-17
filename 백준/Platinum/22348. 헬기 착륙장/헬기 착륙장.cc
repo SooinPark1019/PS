@@ -21,12 +21,12 @@ typedef long double ld;
 const int INF = 0x3f3f3f3f;
 const double EPS = 1e-9;
 const ll LNF = 1e18;
-const ll mod = 998244353;
+const ll mod = 1e9+7;
 const int MAXN = (1<<18)+5;
 const int D = 20;
 
-int DP[405][50005];
-int prefix[405][50005];
+int DP[505][50005];
+int prefix[505][50005];
 
 signed main(){
     ios::sync_with_stdio(false);
@@ -34,7 +34,7 @@ signed main(){
     cout.tie(NULL);
 
     DP[0][0]=1;
-    for(int i=0; i<400; i++){
+    for(int i=0; i<500; i++){
         for(int j=0; j<50000; j++){
             if(DP[i][j]==0) continue;
             if(j+i+1<=50000){
@@ -45,7 +45,7 @@ signed main(){
             DP[i+1][j]%=mod;
         }
     }
-    for(int i=1; i<=400; i++){
+    for(int i=1; i<=500; i++){
         for(int j=0; j<=50000; j++){
             prefix[i][j]=DP[i][j];
             if(j>0) prefix[i][j]+=prefix[i][j-1];
@@ -59,7 +59,7 @@ signed main(){
         int a, b;
         cin >> a >> b;
         int ans=0;
-        for(int i=1; i<400; i++){
+        for(int i=1; i<500; i++){
             if(i*(i+1)/2>a+b) break;
             ans+=prefix[i][a];
             ans%=mod;
