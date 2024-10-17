@@ -35,7 +35,7 @@ signed main(){
 
     DP[0][0]=1;
     for(int i=0; i<500; i++){
-        for(int j=0; j<50000; j++){
+        for(int j=0; j<=50000; j++){
             if(DP[i][j]==0) continue;
             if(j+i+1<=50000){
             DP[i+1][j+i+1]+=DP[i][j];
