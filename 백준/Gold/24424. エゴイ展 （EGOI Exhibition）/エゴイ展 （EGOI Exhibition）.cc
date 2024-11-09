@@ -66,52 +66,45 @@ signed main(){
 
     stack<pii> S;
 
+    int temptype=-1;
+    int tempval=-1;
+
     for(int i=0; i<N; i++){
         int a, b;
         cin >> a >> b;
-        if(!S.empty()&&S.top().first==a){
-            if(S.top().second>b) continue;
-            else{
-                S.pop();
+        if(b>0){
+            if(S.empty()||S.top().first!=a){
+                ans+=b;
                 S.push({a, b});
-            }
-        }
-        else{
-            S.push({a, b});
-        }
-    }
-    vector<pii> V;
-    while(!S.empty()){
-        V.push_back(S.top());
-        S.pop();
-    }
-
-    reverse(all(V));
-
-    //for(auto i : V) cout << i.first << " " << i.second << "\n";
-
-    int prev=0;
-    for(int i=0; i<V.size(); i++){
-        if(V[i].second>0){
-            ans+=V[i].second;
-            prev=1;
-        }
-        else if(i>0&&i<N-1&&prev==1){
-            if(prev==1&&V[i-1].first==V[i+1].first&&V[i].second+V[i+1].second>0){
-                ans+=V[i].second+V[i+1].second;
-                i++;
-                prev=1;
+                temptype=-1;
             }
             else{
-                prev=0;
+                if(temptype==-1||tempval+b<0){
+                    if(S.top().second>=b) continue;
+                    else{
+                        ans-=S.top().second;
+                        S.pop();
+                        ans+=b;
+                        S.push({a, b});
+                        temptype=-1;
+                    }
+                }
+                else{
+                    ans+=tempval+b;
+                    S.push({a, b});
+                    temptype=-1;
+                }
             }
         }
         else{
-            prev=0;
+            if(S.empty()||a==S.top().first) continue;
+            else if(temptype!=-1&&tempval>b) continue;
+            else{
+                temptype=a;
+                tempval=b;
+            }
         }
     }
-
     cout << ans;
-    
     return 0;
 }
