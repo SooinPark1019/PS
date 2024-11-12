@@ -63,7 +63,7 @@ signed main(){
     cout.tie(NULL);
 
     int N, M;
-    cin >> N >> M;
+    cin >> M >> N;
 
     vector<int> X;
     X.push_back(1);
@@ -99,11 +99,11 @@ signed main(){
         int c=i.c;
         int d=i.d;
         //cout << dict[a] << " " << dict[b] << " " << dict[c] << "\n";
-        int leftcost=min_query(1, 0, X.size()-1, dict[a], dict[c], seg1);
+        int leftcost=min_query(1, 0, X.size()-1, dict[a], dict[b], seg1);
         if(leftcost<1e18){
             update(1, 0, X.size()-1, dict[c], d+leftcost, seg1);
         } 
-        int rightcost=min_query(1, 0, X.size()-1, dict[c], dict[b], seg2);
+        int rightcost=min_query(1, 0, X.size()-1, dict[a], dict[b], seg2);
         if(rightcost<1e18){
             update(1, 0, X.size()-1, dict[c], d+rightcost, seg2);
         }
