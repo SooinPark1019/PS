@@ -10,7 +10,7 @@
 #define fi first
 #define se second
 #define all(v) (v).begin(), (v).end()
-#define int long long
+//#define int long long
 
 using namespace __gnu_cxx;
 using namespace std;
@@ -33,21 +33,8 @@ const int D = 20;
 */
 
 vector<int> ans;
-set<pii> S;
-
-void sol(int curN, int curans){
-    if(S.find({curN, curans})!=S.end()) return;
-    S.insert({curN, curans});
-    if(curN==1) ans.push_back(curans);
-    else{
-        sol(1, curans+curN-1);
-        for(int i=2; i*i<=curN; i++){
-            if(curN%i) continue;
-            sol(curN/i, curans+i-1);
-            if(i*i!=curN) sol(i, curans+curN/i-1);
-        }
-    }
-}
+vector<int> divisors;
+set<int> S[1400];
 
 signed main(){
     ios::sync_with_stdio(false);
@@ -57,13 +44,41 @@ signed main(){
     int N;
     cin >> N;
 
-    sol(N, 0);
+    for(int i=1; i*i<=N; i++){
+        if(N%i) continue;
+        divisors.push_back(i);
+        divisors.push_back(N/i);
+    }
 
-    sort(all(ans));
-    ans.erase(unique(all(ans)), ans.end());
+    sort(all(divisors));
+    divisors.erase(unique(all(divisors)), divisors.end());
 
-    cout << ans.size() << "\n";
-    for(auto i : ans) cout << i << " ";
+    /*for(auto i : divisors) cout << i << " ";
+    cout << "\n";*/
+
+    S[0].insert(0);
+
+    /*for(int i=0; i<divisors.size(); i++){
+        S[i].insert(divisors[i]-1);
+    }*/
+
+    for(int i=0; i<divisors.size(); i++){
+        //cout << i << endl;
+        for(int j=i+1; j<divisors.size(); j++){
+            //cout << j << endl;
+            //cout << divisors[j] << " " << divisors[i] << endl;
+            if(divisors[j]%divisors[i]) continue;
+            for(auto k : S[i]){
+                //cout << k << endl;
+                //cout << k+divisors[j]/divisors[i]-1 << endl;
+                S[j].insert(k+divisors[j]/divisors[i]-1);
+            }
+        }
+    }
+    cout << S[divisors.size()-1].size() << "\n";
+    for(auto i : S[divisors.size()-1]){
+        cout << i << " ";
+    }
     
     return 0;
 }
