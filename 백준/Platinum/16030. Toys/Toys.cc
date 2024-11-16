@@ -33,8 +33,11 @@ const int D = 20;
 */
 
 vector<int> ans;
+set<pii> S;
 
 void sol(int curN, int curans){
+    if(S.find({curN, curans})!=S.end()) return;
+    S.insert({curN, curans});
     if(curN==1) ans.push_back(curans);
     else{
         sol(1, curans+curN-1);
@@ -55,7 +58,7 @@ signed main(){
     cin >> N;
 
     sol(N, 0);
-    
+
     sort(all(ans));
     ans.erase(unique(all(ans)), ans.end());
 
