@@ -96,7 +96,7 @@ int sum(int index, int bucket){
     return ret;
 }
 
-int bucketsz=500;
+int bucketsz=1000;
 
 signed main(){
     ios::sync_with_stdio(false);
