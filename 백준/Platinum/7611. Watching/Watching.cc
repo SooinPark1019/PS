@@ -58,12 +58,12 @@ signed main(){
         memset(DP, INF, sizeof(DP));
         DP[0][0]=0;
         for(int i=0; i<N; i++){
+            int a=V[i]+mid-1;
+            int b=V[i]+2*mid-1;
+            int sh=upper_bound(all(V), a)-V.begin();
+            int lo=upper_bound(all(V), b)-V.begin();
             for(int j=0; j<N; j++){
                 if(DP[i][j]==INF) continue;
-                int a=V[i]+mid-1;
-                int b=V[i]+2*mid-1;
-                int sh=upper_bound(all(V), a)-V.begin();
-                int lo=upper_bound(all(V), b)-V.begin();
                 DP[sh][j+1]=min(DP[sh][j+1], DP[i][j]);
                 DP[lo][j]=min(DP[lo][j], DP[i][j]+1);
             }
