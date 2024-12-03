@@ -36,6 +36,7 @@ int DP[100005][2];
 map<int, int> V[100005][2];
 int indegree[100005];
 int indegree2[100005];
+
 signed main(){
     ios::sync_with_stdio(false);
     cin.tie(NULL);
@@ -54,6 +55,11 @@ signed main(){
 
     queue<int> Q;
     Q.push(N);
+    
+    for(int i=1; i<=N; i++){
+        DP[i][0]=LNF;
+        DP[i][1]=LNF;
+    }
     DP[N][0]=0;
     DP[N][1]=LNF;
 
@@ -71,12 +77,11 @@ signed main(){
                     a-=p.second;
                     temp=min(temp, p.first+a);
                 }
+                assert(a==0);
                 DP[i][0]=temp;
-                a=indegree2[i];
                 temp=LNF;
                 for(auto p : V[i][1]){
-                    a-=p.second;
-                    temp=min(temp, p.first+a);
+                    temp=min(temp, p.first);
                 }
                 DP[i][1]=temp;
                 Q.push(i);
