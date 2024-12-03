@@ -31,7 +31,7 @@ const double PI = acos(-1);
 /*
 간선 거꾸로 놓는 거까지는 맞을 거 같다
 */
-char arr[1005][105];
+char arr[1005][1005];
 signed main(){
     ios::sync_with_stdio(false);
     cin.tie(NULL);
@@ -57,8 +57,8 @@ signed main(){
         }
     }
     else{
-        for(int i=0; i<X-1; i++){
-            if(arr[i][Y/2-2]=='X'&&arr[i][Y/2-1]&&arr[i][Y/2]&&arr[i][Y/2+1]){
+        for(int i=0; i<X; i++){
+            if(arr[i][Y/2-2]=='X'&&arr[i][Y/2-1]=='X'&&arr[i][Y/2]=='X'&&arr[i][Y/2+1]=='X'){
                 arr[i][Y/2-2]='W';
                 arr[i][Y/2-1]='Y';
                 arr[i][Y/2]='Y';
