@@ -32,12 +32,12 @@ const double PI = acos(-1);
 
 */
 vector<int> graph[300005];
-int DP[300005];
 int lvl[300005];
 int par[300005];
+int low[300005];
 
 void dfs(int cur_node, int p){
-    DP[cur_node]=0;
+    low[cur_node]=lvl[cur_node];
     for(int nxt : graph[cur_node]){
         if(nxt==p) continue;
         //cout << "cur_node : " << cur_node << " nxt : " << nxt << "\n";
@@ -46,12 +46,9 @@ void dfs(int cur_node, int p){
             lvl[nxt]=lvl[cur_node]+1;
             par[nxt]=cur_node;
             dfs(nxt, cur_node);
-            DP[cur_node]+=DP[nxt];
+            low[cur_node]=min(low[cur_node], low[nxt]);
         }
-        else if(lvl[nxt]<lvl[cur_node]){
-            DP[cur_node]++;
-            DP[nxt]--;
-        }
+        else low[cur_node]=min(low[cur_node], lvl[nxt]);
     }
 }
 
@@ -70,13 +67,18 @@ signed main(){
     }
     lvl[1]=1;
     dfs(1, -1);
+    /*for(int i=1; i<=N; i++){
+        cout << low[i] << " ";
+    }
+    cout << "\n";*/
     int ans=0;
     for(int i=1; i<=N; i++){
         //cout << "i : " << i << " DP : " << DP[i] << "\n";
         int component=1;
+        if(i==1) component=0;
         for(auto j : graph[i]){
-            if(lvl[j]<lvl[i]) continue;
-            if(DP[j]==0) component++;
+            //cout << "i : " << i << " " << "j : " << j << " " << low[j] << "\n";
+            if(par[j]==i&&low[j]>=lvl[i]) component++;
         }
         //cout << component << " " << graph[i].size() << "\n";
         if(component+M-graph[i].size()==N-1) ans+=i;
