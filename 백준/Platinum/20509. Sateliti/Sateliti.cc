@@ -45,8 +45,9 @@ int fastmul(int a, int b){
     return a*fastmul(a, b-1)%mod;
 }
 
-int prefix[1005][1005];
-int arr[1005][1005];
+int prefix[2005][2005];
+int arr[2005][2005];
+int powpq[2005][2005];
 
 void input(int N, int M){
     for(int i=0; i<N; i++){
@@ -68,13 +69,20 @@ void input(int N, int M){
 void precalc(int N, int M){
     for(int i=0; i<2*N; i++){
         for(int j=0; j<2*M; j++){
+            if(i==0&&j==0) powpq[i][j]=1;
+            else if(i==0) powpq[i][j]=powpq[i][j-1]*q%mod;
+            else powpq[i][j]=powpq[i-1][j]*p%mod;
+        }
+    }
+    for(int i=0; i<2*N; i++){
+        for(int j=0; j<2*M; j++){
             if(i!=0) prefix[i][j]+=prefix[i-1][j];
             if(j!=0) prefix[i][j]+=prefix[i][j-1];
             if(i!=0&&j!=0) prefix[i][j]-=prefix[i-1][j-1];
             prefix[i][j]+=mod;
             prefix[i][j]%=mod;
             if(arr[i][j]==1){
-                prefix[i][j]+=fastmul(p, i)*fastmul(q, j);
+                prefix[i][j]+=powpq[i][j];
                 prefix[i][j]%=mod;
             }
         }
@@ -93,8 +101,8 @@ int calc(int x, int y, int dx, int dy){
 }
 
 bool isequal(int x1, int y1, int x2, int y2, int dx, int dy){
-    int a=calc(x1, y1, dx, dy)*fastmul(p, x2)%mod*fastmul(q, y2)%mod;
-    int b=calc(x2, y2, dx, dy)*fastmul(p, x1)%mod*fastmul(q, y1)%mod;
+    int a=calc(x1, y1, dx, dy)*powpq[x2][y2]%mod;
+    int b=calc(x2, y2, dx, dy)*powpq[x1][y1]%mod;
     //cout << "a : " << a << " b : " << b << "\n";
     return a==b;
 }
