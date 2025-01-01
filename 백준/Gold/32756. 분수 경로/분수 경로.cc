@@ -47,11 +47,10 @@ signed main(){
     int a=__gcd(abs(N), D);
     N/=a;
     D/=a;
-    if(__builtin_popcountll(abs(D))!=1) cout << -1 << "\n";
+    if(__builtin_popcountll(D)!=1) cout << -1 << "\n";
     else{
         string S;
         a=abs(N/D);
-        //cout << "a : " << a << "\n";
         for(int i=0; i<=60; i++){
             if((a&(1ll<<i))!=0){
                 if(N<0) S+="L";
@@ -59,11 +58,12 @@ signed main(){
             }
             S+="U";
         }
-        int b=abs(abs(N)%D);
-        //cout << "N : " << N << "\n";
+        if(N>0) N-=a*D;
+        else N+=a*D;
+        int b=abs(N);
         for(int i=0; i<=60; i++) S+="D";
         a=1;
-        while(a<D){
+        while(a!=D){
             S+="D";
             a<<=1;
         }
@@ -74,7 +74,6 @@ signed main(){
             }
             S+="U";
         }
-        assert(S.length()<=1000);
         cout << S.length() << "\n";
         cout << S;
     }
