@@ -57,7 +57,6 @@ int fastmul(int a, int b){
 }
 
 int bino(int a, int b){
-    if(b>a) return 0;
     return fac[a]*inv_fac[a-b]%mod*inv_fac[b]%mod;
 }
 
@@ -106,29 +105,33 @@ signed main(){
     //cout << "\n";
 
     for(int i=2; i<=N; i++){
-        ans+=2*(bino(N-1, K)-bino(N-1-DP[i], K)+mod)%mod;
+        if(N-1-DP[i]<K) ans+=bino(N-1, K);
+        else ans+=(bino(N-1, K)-bino(N-1-DP[i], K)+mod)%mod;
         ans%=mod;
         //cout << ans << "\n";
     }
 
+    ans*=2;
+    ans%=mod;
+
     //cout << ans << "\n";
 
     int prefixsum=0;
+    int minus=0;
 
     for(int i=1; i<=N; i++){
         for(int j=1; j<=depthcnt[i]; j++){
-            if(K-j>prefixsum) continue;
+            if(K-j>prefixsum||K<j) continue;
             int temp=i*bino(depthcnt[i], j)%mod;
-            temp*=bino(prefixsum, K-j)%mod;
+            temp*=bino(prefixsum, K-j);
             temp%=mod;
-            ans-=temp;
-            ans+=mod;
-            ans%=mod;
+            minus+=temp;
+            minus%=mod;
         }
         prefixsum+=depthcnt[i];
     }
 
-    cout << ans;
+    cout << (ans-minus+mod)%mod;
     
     return 0;
 }
