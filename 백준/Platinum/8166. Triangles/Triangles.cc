@@ -86,10 +86,6 @@ signed main(){
             temp.y+=A.y;
         }
     }
-    /*cout << fixed;
-    cout.precision(1);
-    cout << (double)ans/2;*/
-
     cout << ans/2 << ".";
     if(ans%2) cout << 5;
     else cout << 0;
