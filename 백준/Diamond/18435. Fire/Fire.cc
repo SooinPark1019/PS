@@ -38,15 +38,15 @@ DP[i]=첫번째 재료의 가치가 i일 때 두번째 재료의 가능한 최�
 나머지는 취할 차원만 취하거나 아니면 둘다 취해야 함
 */
 
-vector<int> Fenwick1(400005);
-vector<int> Fenwick2(400005);
-vector<int> Fenwick3(400005);
-vector<int> Fenwick4(400005);
+vector<int> Fenwick1(500005);
+vector<int> Fenwick2(500005);
+vector<int> Fenwick3(500005);
+vector<int> Fenwick4(500005);
 
 void update(int index, int v, vector<int>& Fenwick){
     //cout << index << " " << v << "\n";
     index+=200002;
-    while(index<=400004){
+    while(index<=500004){
         Fenwick[index]+=v;
         index+=index&(-index);
     }
@@ -62,10 +62,10 @@ int sum(int index, vector<int>& Fenwick){
     return ret;
 }
 
-int leftbigger[200005];
-int rightbigger[200005];
+int leftbigger[500005];
+int rightbigger[500005];
 
-vector<pii> Query[5][200005];
+vector<pii> Query[5][500005];
 
 void add_triangle(int l, int r, int v){
     //cout << "l : " << l << " r : " << r << " v : " << v << "\n";
@@ -87,7 +87,7 @@ bool compare(query A, query B){
     return A.t<B.t;
 }
 
-int ans[200005];
+int ans[500005];
 
 void do_queries(int cur_time){
     //cout << "Fenwick1 : " << "\n";
