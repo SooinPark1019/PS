@@ -38,22 +38,27 @@ DP[i]=첫번째 재료의 가치가 i일 때 두번째 재료의 가능한 최�
 나머지는 취할 차원만 취하거나 아니면 둘다 취해야 함
 */
 
-int DPfromleft[2005][2005][2];
-int DPfromright[2005][2005][2];
+int DPfromleft[3005][3005][2];
+int DPfromright[3005][3005][2];
 int N, L;
 vector<int> V;
+vector<pii> X;
+int prefix[3005];
+int suffix[3005];
 
-void fill_DP(int DP[2005][2005][2]){
-    for(int i=N-1; i>0; i--){
-        for(int j=0; j+i<N; j++){
+void fill_DP(int DP[3005][3005][2]){
+    for(int i=X.size()-2; i>0; i--){
+        for(int j=1; j+i<X.size(); j++){
             //cout << "l : " << j << " r : " << i+j << " DP : " << DP[j][i+j][0] << " " << DP[j][i+j][1] << "\n";
             if(DP[j][i+j][0]!=1e18){
-                DP[j+1][i+j][0]=min(DP[j+1][i+j][0], DP[j][i+j][0]+(N+1-i)*(V[j+1]-V[j]));
-                DP[j+1][i+j][1]=min(DP[j+1][i+j][1], DP[j][i+j][0]+(N+1-i)*(V[i+j]-V[j]));
+                //cout << (prefix[j]+suffix[i+j+1])*abs(X[j].first-X[j+1].first) << "\n";
+                DP[j+1][i+j][0]=min(DP[j+1][i+j][0], DP[j][i+j][0]+(prefix[j]+suffix[i+j+1]+1)*abs(X[j].first-X[j+1].first));
+                DP[j+1][i+j][1]=min(DP[j+1][i+j][1], DP[j][i+j][0]+(prefix[j]+suffix[i+j+1]+1)*abs(X[j].first-X[i+j].first));
             }
             if(DP[j][i+j][1]!=1e18){
-                DP[j][i+j-1][1]=min(DP[j][i+j-1][1], DP[j][i+j][1]+(N+1-i)*(V[i+j]-V[i+j-1]));
-                DP[j][i+j-1][0]=min(DP[j][i+j-1][0], DP[j][i+j][1]+(N+1-i)*(V[i+j]-V[j]));
+                //cout << (prefix[j-1]+suffix[i+j])*abs(X[j].first-X[j+1].first) << "\n";
+                DP[j][i+j-1][0]=min(DP[j][i+j-1][0], DP[j][i+j][1]+(prefix[j-1]+suffix[i+j]+1)*abs(X[i+j].first-X[j].first));
+                DP[j][i+j-1][1]=min(DP[j][i+j-1][1], DP[j][i+j][1]+(prefix[j-1]+suffix[i+j]+1)*abs(X[i+j].first-X[i+j-1].first));
             }
         }
     }
@@ -78,54 +83,77 @@ signed main(){
     }
 
     sort(all(V));
-
-    //for(auto i : V) cout << i << " ";
-    //cout << "\n";
+    X.push_back({-1, 0});
 
     for(int i=0; i<N; i++){
-        for(int j=0; j<N; j++){
-            for(int k=0; k<2; k++){
-                DPfromleft[i][j][k]=1e18;
-                DPfromright[i][j][k]=1e18;
+        if(X.back().first!=V[i]) X.push_back({V[i], 1});
+        else X.back().second++;
+    }
+    if(X.size()<3000){
+        //for(auto i : V) cout << i << " ";
+        //cout << "\n";
+
+        for(int i=1; i<X.size(); i++){
+            prefix[i]+=X[i].second+prefix[i-1];
+        }
+        for(int i=X.size()-1; i>0; i--){
+            suffix[i]+=X[i].second+suffix[i+1];
+        }
+
+        for(int i=0; i<=X.size(); i++){
+            for(int j=0; j<=X.size(); j++){
+                for(int k=0; k<2; k++){
+                    DPfromleft[i][j][k]=1e18;
+                    DPfromright[i][j][k]=1e18;
+                }
             }
         }
-    }
 
-    DPfromleft[0][N-1][0]=0;
-    DPfromright[0][N-1][1]=0;
+        DPfromleft[1][X.size()-1][0]=0;
+        DPfromright[1][X.size()-1][1]=0;
 
-    fill_DP(DPfromleft);
-    fill_DP(DPfromright);
+        fill_DP(DPfromleft);
+        fill_DP(DPfromright);
 
-    int curpointer=0;
-    for(int i=0; i<=L; i++){
-        while(curpointer<N-1&&(N+1)*abs(V[curpointer]-i)+DPfromleft[curpointer][curpointer][0]>=(N+1)*abs(V[curpointer+1]-i)+DPfromleft[curpointer+1][curpointer+1][0]){
-            curpointer++;
+        int curpointer=0;
+        for(int i=0; i<=L; i++){
+            while(curpointer<X.size()-1&&(N+1)*abs(X[curpointer].first-i)+DPfromleft[curpointer][curpointer][0]>=(N+1)*abs(X[curpointer+1].first-i)+DPfromleft[curpointer+1][curpointer+1][0]){
+                curpointer++;
+            }
+            //cout << curpointer << endl;
+            bestFromLeft[i]=abs(X[curpointer].first-i)*(N+1)+DPfromleft[curpointer][curpointer][0];
         }
-        //cout << curpointer << endl;
-        bestFromLeft[i]=abs(V[curpointer]-i)*(N+1)+DPfromleft[curpointer][curpointer][0];
-    }
-    curpointer=N-1;
-    for(int i=L; i>=0; i--){
-        while(curpointer>0&&(N+1)*abs(V[curpointer]-i)+DPfromright[curpointer][curpointer][0]>=(N+1)*abs(V[curpointer-1]-i)+DPfromright[curpointer-1][curpointer-1][0]){
-            curpointer--;
+        curpointer=X.size()-1;
+        for(int i=L; i>=0; i--){
+            while(curpointer>1&&(N+1)*abs(X[curpointer].first-i)+DPfromright[curpointer][curpointer][0]>=(N+1)*abs(X[curpointer-1].first-i)+DPfromright[curpointer-1][curpointer-1][0]){
+                curpointer--;
+            }
+            bestFromRight[i]=(N+1)*abs(X[curpointer].first-i)+DPfromright[curpointer][curpointer][0];
         }
-        bestFromRight[i]=(N+1)*abs(V[curpointer]-i)+DPfromright[curpointer][curpointer][0];
+
+        int Q;
+        cin >> Q;
+
+        while(Q--){
+            int S, G, T;
+            cin >> S >> G >> T;
+            int ans=1e18;
+            ans=min(ans, abs(S-V[0])+bestFromLeft[G]);
+            ans=min(ans, abs(S-V[N-1])+bestFromRight[G]);
+            ans+=N;
+            //cout << ans << "\n";
+            if(ans<=T) cout << "Yes\n";
+            else cout << "No\n";
+        }
     }
-
-    int Q;
-    cin >> Q;
-
-    while(Q--){
-        int S, G, T;
-        cin >> S >> G >> T;
-        int ans=1e18;
-        ans=min(ans, abs(S-V[0])+bestFromLeft[G]);
-        ans=min(ans, abs(S-V[N-1])+bestFromRight[G]);
-        ans+=N;
-        //cout << ans << "\n";
-        if(ans<=T) cout << "Yes\n";
-        else cout << "No\n";
+    else{
+        int Q;
+        cin >> Q;
+        while(Q--){
+            int S, G, T;
+            cin >> S >> G >> T;
+            cout << "No\n";
+        }
     }
 
     return 0;
