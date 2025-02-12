@@ -59,6 +59,9 @@ void fill_DP(int DP[2005][2005][2]){
     }
 }
 
+int bestFromLeft[500005];
+int bestFromRight[500005];
+
 signed main(){
     ios::sync_with_stdio(false);
     cin.tie(NULL);
@@ -94,6 +97,22 @@ signed main(){
     fill_DP(DPfromleft);
     fill_DP(DPfromright);
 
+    int curpointer=0;
+    for(int i=0; i<=L; i++){
+        while(curpointer<N-1&&(N+1)*abs(V[curpointer]-i)+DPfromleft[curpointer][curpointer][0]>=(N+1)*abs(V[curpointer+1]-i)+DPfromleft[curpointer+1][curpointer+1][0]){
+            curpointer++;
+        }
+        //cout << curpointer << endl;
+        bestFromLeft[i]=abs(V[curpointer]-i)*(N+1)+DPfromleft[curpointer][curpointer][0];
+    }
+    curpointer=N-1;
+    for(int i=L; i>=0; i--){
+        while(curpointer>0&&(N+1)*abs(V[curpointer]-i)+DPfromright[curpointer][curpointer][0]>=(N+1)*abs(V[curpointer-1]-i)+DPfromright[curpointer-1][curpointer-1][0]){
+            curpointer--;
+        }
+        bestFromRight[i]=(N+1)*abs(V[curpointer]-i)+DPfromright[curpointer][curpointer][0];
+    }
+
     int Q;
     cin >> Q;
 
@@ -101,16 +120,8 @@ signed main(){
         int S, G, T;
         cin >> S >> G >> T;
         int ans=1e18;
-        for(int i=0; i<N; i++){
-            int temp=abs(S-V[0])+DPfromleft[i][i][0]+abs(G-V[i])*(N+1);
-            //cout << "DP : " << DPfromleft[i][i][0] << " " << DPfromleft[i][i][1] << "\n";
-            ans=min(ans, temp);
-        }
-        for(int i=0; i<N; i++){
-            int temp=abs(S-V[N-1])+DPfromright[i][i][1]+abs(G-V[i])*(N+1);
-            //cout << "temp : " << temp << "\n";
-            ans=min(ans, temp);
-        }
+        ans=min(ans, abs(S-V[0])+bestFromLeft[G]);
+        ans=min(ans, abs(S-V[N-1])+bestFromRight[G]);
         ans+=N;
         //cout << ans << "\n";
         if(ans<=T) cout << "Yes\n";
