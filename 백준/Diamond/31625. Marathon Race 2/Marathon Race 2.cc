@@ -37,86 +37,85 @@ DP[i]=첫번째 재료의 가치가 i일 때 두번째 재료의 가능한 최�
 
 나머지는 취할 차원만 취하거나 아니면 둘다 취해야 함
 */
-int minX=1e18, maxX=-1e18;
-int takingBallDisFromleft[500005];
-int takingBallDisFromRight[500005];
-int ballcnt[500005];
-int ballcntleft[500005];
-int ballcntright[500005];
+
+int DPfromleft[2005][2005][2];
+int DPfromright[2005][2005][2];
+int N, L;
+vector<int> V;
+
+void fill_DP(int DP[2005][2005][2]){
+    for(int i=N-1; i>0; i--){
+        for(int j=0; j+i<N; j++){
+            //cout << "l : " << j << " r : " << i+j << " DP : " << DP[j][i+j][0] << " " << DP[j][i+j][1] << "\n";
+            if(DP[j][i+j][0]!=1e18){
+                DP[j+1][i+j][0]=min(DP[j+1][i+j][0], DP[j][i+j][0]+(N+1-i)*(V[j+1]-V[j]));
+                DP[j+1][i+j][1]=min(DP[j+1][i+j][1], DP[j][i+j][0]+(N+1-i)*(V[i+j]-V[j]));
+            }
+            if(DP[j][i+j][1]!=1e18){
+                DP[j][i+j-1][1]=min(DP[j][i+j-1][1], DP[j][i+j][1]+(N+1-i)*(V[i+j]-V[i+j-1]));
+                DP[j][i+j-1][0]=min(DP[j][i+j-1][0], DP[j][i+j][1]+(N+1-i)*(V[i+j]-V[j]));
+            }
+        }
+    }
+}
+
 signed main(){
     ios::sync_with_stdio(false);
     cin.tie(NULL);
     cout.tie(NULL);
 
-    int N, L;
+    
     cin >> N >> L;
 
+    
     for(int i=0; i<N; i++){
         int a;
         cin >> a;
-        minX=min(minX, a);
-        maxX=max(maxX, a);
-        ballcnt[a]++;
+        V.push_back(a);
     }
-    int curballs=0;
-    takingBallDisFromleft[minX]=ballcnt[minX];
-    for(int i=minX+1; i<=maxX; i++){
-        curballs+=ballcnt[i-1];
-        ballcntleft[i]=curballs;
-        takingBallDisFromleft[i]=takingBallDisFromleft[i-1]+curballs+1+ballcnt[i];
+
+    sort(all(V));
+
+    //for(auto i : V) cout << i << " ";
+    //cout << "\n";
+
+    for(int i=0; i<N; i++){
+        for(int j=0; j<N; j++){
+            for(int k=0; k<2; k++){
+                DPfromleft[i][j][k]=1e18;
+                DPfromright[i][j][k]=1e18;
+            }
+        }
     }
-    curballs=0;
-    takingBallDisFromRight[maxX]=ballcnt[maxX];
-    for(int i=maxX-1; i>=minX; i--){
-        curballs+=ballcnt[i+1];
-        ballcntright[i]=curballs;
-        takingBallDisFromRight[i]=takingBallDisFromRight[i+1]+curballs+1+ballcnt[i];
-    }
+
+    DPfromleft[0][N-1][0]=0;
+    DPfromright[0][N-1][1]=0;
+
+    fill_DP(DPfromleft);
+    fill_DP(DPfromright);
+
     int Q;
     cin >> Q;
+
     while(Q--){
         int S, G, T;
         cin >> S >> G >> T;
-        
-        int dis1=0, dis2=0;
-
-        dis1+=abs(S-minX);
-        //cout << dis1 << "\n";
-        if(G<minX){
-            dis1+=maxX-minX;
-            dis1+=takingBallDisFromRight[minX];
-            dis1+=(N+1)*(minX-G);
+        int ans=1e18;
+        for(int i=0; i<N; i++){
+            int temp=abs(S-V[0])+DPfromleft[i][i][0]+abs(G-V[i])*(N+1);
+            //cout << "DP : " << DPfromleft[i][i][0] << " " << DPfromleft[i][i][1] << "\n";
+            ans=min(ans, temp);
         }
-        else if(G<=maxX){
-            dis1+=takingBallDisFromleft[G];
-            dis1+=(2*ballcntleft[G]+1)*(maxX-G);
-            dis1+=takingBallDisFromRight[G];
-            dis1-=ballcnt[G];
+        for(int i=0; i<N; i++){
+            int temp=abs(S-V[N-1])+DPfromright[i][i][1]+abs(G-V[i])*(N+1);
+            //cout << "temp : " << temp << "\n";
+            ans=min(ans, temp);
         }
-        else{
-            dis1+=takingBallDisFromleft[maxX];
-            dis1+=(G-maxX)*(N+1);
-        }
-
-        dis2+=abs(S-maxX);
-        if(G>maxX){
-            dis2+=maxX-minX;
-            dis2+=takingBallDisFromleft[maxX];
-            dis2+=(N+1)*(G-maxX);
-        }
-        else if(minX<=G){
-            dis2+=takingBallDisFromRight[G];
-            dis2+=(2*ballcntright[G]+1)*(G-minX);
-            dis2+=takingBallDisFromleft[G];
-            dis2-=ballcnt[G];
-        }
-        else{
-            dis2+=takingBallDisFromRight[minX];
-            dis2+=(N+1)*(minX-G);
-        }
-        //cout << dis1 << " " << dis2 << "\n";
-        if(min(dis1, dis2)<=T) cout << "Yes\n";
+        ans+=N;
+        //cout << ans << "\n";
+        if(ans<=T) cout << "Yes\n";
         else cout << "No\n";
     }
+
     return 0;
 }
