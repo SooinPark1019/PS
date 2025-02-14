@@ -1,0 +1,8 @@
+-- 코드를 작성해주세요
+SELECT
+    COUNT(GENOTYPE) as COUNT
+FROM
+    ECOLI_DATA
+WHERE
+    (GENOTYPE%4<2) AND ((GENOTYPE%2>0) OR (GENOTYPE%8>=4))
+    
