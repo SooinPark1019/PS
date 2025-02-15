@@ -1,0 +1,153 @@
+#include <ext/rope>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+#include <bits/stdc++.h>
+#define _USE_MATH_DEFINES
+//#pragma GCC optimize ("O3")
+//#pragma GCC optimize ("Ofast")
+//#pragma GCC optimize ("unroll-loops")
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+#define PB push_back
+#define fi first
+#define se second
+#define all(v) (v).begin(), (v).end()
+#define zip(v) sort(all(v)); v.erase(unique(all(v)), v.end());
+//#define sz(x) (int)x.size()
+#define int long long
+#define ll long long
+
+using namespace std;
+
+//using namespace __gnu_pbds;
+//using namespace __gnu_cxx;
+//#define ordered_set tree<ll, null_type, less_equal<ll>, rb_tree_tag,tree_order_statistics_node_update>//이걸 코드의 윗부분에 추가
+/*void m_erase(ordered_set &OS, ll val){
+    ll index = OS.order_of_key(val);
+    ordered_set::iterator it = OS.find_by_order(index);
+    if(*it == val) OS.erase(it);
+}*/
+//다른 건 통상적인 PBDS처럼 사용하면 되지만 erase는 반드시!!! 이 함수를 통해서만 해야 함
+//m_erase(OS, 지울 원소)처럼 사용하면 된다. 꼭 주의하자.
+//얘네 쓰려면 define int long long 꺼라.
+
+typedef complex<double> cpx;
+//typedef __int128 i128;
+typedef long double ld;
+typedef pair<double, int> pdl;
+const int INF = 0x3f3f3f3f;
+const double EPS = 1e-9;
+const ll LNF = 1e18;
+const ll mod = 1e9+7;
+const int MAXN = (1<<18)+5;
+const double PI = acos(-1);
+
+/*
+DP[i]=첫번째 재료의 가치가 i일 때 두번째 재료의 가능한 최대 가치
+
+두 차원 모두 양수인 거는 당연히 그대로 합치고
+그렇지 않을 경우 취할 차원을 선택
+
+나머지는 취할 차원만 취하거나 아니면 둘다 취해야 함
+*/
+int MAX=4*4*200000+5;
+vector<int> Lseg(MAX);
+vector<int> Rseg(MAX);
+void update(int node, int start, int end, int index, int value, vector<int>& seg){
+    if(index<start||end<index) return;
+    if(start==end) seg[node]+=value;
+    else{
+        int mid=(start+end)>>1;
+        update(node*2, start, mid, index, value, seg);
+        update(node*2+1, mid+1, end, index, value, seg);
+        seg[node]=(seg[node*2]+seg[node*2+1]);
+    }
+    return;
+}
+int query(int node, int start, int end, int left, int right, vector<int>& seg){
+    if(right<start||end<left) return 0;
+    if(left<=start&&end<=right) return seg[node];
+    int mid=(start+end)>>1;
+    return query(node*2, start, mid, left, right, seg)+query(node*2+1, mid+1, end, left, right, seg);
+}
+int segLindex[200005];
+int segRindex[200005];
+int queryLindex[200005];
+int queryRindex[200005];
+int ans[200005];
+
+bool compare1(pii A, pii B){
+    return A.second-A.first>B.second-B.first;
+}
+
+struct st{
+    int l, r, k, i;
+};
+bool compare2(st A, st B){
+    return A.k>B.k;
+}
+
+signed main(){
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout.tie(NULL);
+
+    int N;
+    cin >> N;
+
+    vector<pii> segments;
+    vector<st> queries;
+    vector<int> X;
+    map<int, int> M;
+
+    for(int i=0; i<N; i++){
+        int l, r, k;
+        cin >> l >> r >> k;
+        segments.push_back({l, r});
+        queries.push_back({r-k, l+k-1, k, i});
+        X.push_back(l);
+        X.push_back(r);
+        X.push_back(r-k);
+        X.push_back(l+k-1);
+    }
+
+    sort(all(segments), compare1);
+    sort(all(queries), compare2);
+    zip(X);
+
+    for(int i=0; i<X.size(); i++){
+        //cout << "X : " << X[i] << " i : " << i << "\n";
+        M[X[i]]=i;
+    }
+
+    for(int i=0; i<segments.size(); i++){
+        segLindex[i]=M[segments[i].first];
+        segRindex[i]=M[segments[i].second];
+    }
+
+    for(int i=0; i<queries.size(); i++){
+        //cout << queries[i].l << " " << M[queries[i].l] << " " << queries[i].r << " " << M[queries[i].r] << "\n";
+        queryLindex[i]=M[queries[i].l];
+        queryRindex[i]=M[queries[i].r];
+    }
+
+    int curpointer=0;
+
+    for(int i=0; i<queries.size(); i++){
+        while(curpointer<segments.size()&&segments[curpointer].second-segments[curpointer].first>=queries[i].k){
+            //cout << "segLindex : " << segLindex[curpointer] << " segRindex : " << segRindex[curpointer] << "\n";
+            update(1, 0, X.size(), segLindex[curpointer], 1, Lseg);
+            update(1, 0, X.size(), segRindex[curpointer], -1, Rseg);
+            curpointer++;
+        }
+        //cout << "queryLindex : " << queryLindex[i] << " queryRindex : " << queryRindex[i] << "\n";
+        //cout << "ans a : " << query(1, 0, X.size(), 0, queryLindex[i], Lseg) << "\n";
+        //cout << "ans b : " << query(1, 0, X.size(), 0, queryRindex[i], Rseg) << "\n";
+        int a=query(1, 0, X.size(), 0, queryLindex[i], Lseg)+query(1, 0, X.size(), 0, queryRindex[i], Rseg)-1;
+        ans[queries[i].i]=a;
+    }
+
+    for(int i=0; i<N; i++) cout << ans[i] << "\n";
+
+    return 0;
+}
