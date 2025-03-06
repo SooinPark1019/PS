@@ -45,6 +45,34 @@ const double PI = acos(-1);
 /*
 */
 
+vector<int> seg;
+
+void update(int node, int start, int end, int index, int val){
+    if(index<start||end<index) return;
+    if(start==end){
+        seg[node]=val;
+    }
+    else{
+        int mid=(start+end)>>1;
+        update(node*2, start, mid, index, val);
+        update(node*2+1, mid+1, end, index, val);
+        seg[node]=min(seg[node*2], seg[node*2+1]);
+    }
+}
+
+int query(int node, int start, int end, int left, int right){
+    if(end<left||right<start) return 1e18;
+    else if(left<=start&&end<=right) return seg[node];
+    else{
+        int mid=(start+end)>>1;
+        return min(query(node*2, start, mid, left, right), query(node*2+1, mid+1, end, left, right));
+    }
+}
+
+bool compare(array<int, 3> A, array<int, 3> B){
+    return A[1]<B[1];
+}
+
 signed main(){
     ios::sync_with_stdio(false);
     cin.tie(NULL);
@@ -53,63 +81,108 @@ signed main(){
     int N, K;
     cin >> N >> K;
 
-    vector<pii> color1;
-    vector<pii> color2;
+    if(K==2){
+        vector<pii> color1;
+        vector<pii> color2;
+
+        for(int i=0; i<N; i++){
+            int x, y, c;
+            cin >> x >> y >> c;
+            if(c==1) color1.push_back({x, y});
+            else color2.push_back({x, y});
+        }
+
+        sort(all(color1));
+        sort(all(color2));
+
+        int left=0;
+        int right=250000;
+        int ans=1e18;
+
+        while(left<=right){
+            int mid=(left+right)>>1;
+            int flag=0;
+            set<int> S;
+            vector<array<int, 3>> V;
+            for(auto p : color2){
+                V.push_back({max(0ll, p.first-mid), 1, p.second});
+                V.push_back({p.first+mid+1, -1, p.second});
+            }
+            sort(all(V));
+            int curpointer=0;
+            for(auto p : color1){
+                while(curpointer<V.size()&&V[curpointer][0]<=p.first){
+                    if(V[curpointer][1]==1) S.insert(V[curpointer][2]);
+                    else S.erase(V[curpointer][2]);
+                    curpointer++;
+                }
+                auto it=S.lower_bound(p.second);
+                if(it!=S.begin()){
+                    int a=*prev(it);
+                    if(abs(a-p.second)<=mid){
+                        flag=1;
+                        break;
+                    }
+                }
+                if(it!=S.end()){
+                    int a=*it;
+                    if(abs(a-p.second)<=mid){
+                        flag=1;
+                        break;
+                    }
+                }
+            }
+            if(flag==1){
+                ans=min(ans, mid);
+                right=mid-1;
+            }
+            else left=mid+1;
+        }
+
+        cout << ans;
+        return 0;
+    }
+
+    vector<array<int, 3>> V;
+    vector<int> X;
 
     for(int i=0; i<N; i++){
         int x, y, c;
         cin >> x >> y >> c;
-        if(c==1) color1.push_back({x, y});
-        else color2.push_back({x, y});
+        V.push_back({x, y, c});
+        X.push_back(x);
     }
 
-    sort(all(color1));
-    sort(all(color2));
+    sort(all(V), compare);
+    zip(X);
 
     int left=0;
     int right=250000;
-    int ans=1e18;
-
+    int ans=250000;
     while(left<=right){
         int mid=(left+right)>>1;
         int flag=0;
-        set<int> S;
-        vector<array<int, 3>> V;
-        for(auto p : color2){
-            V.push_back({max(0ll, p.first-mid), 1, p.second});
-            V.push_back({p.first+mid+1, -1, p.second});
-        }
-        sort(all(V));
-        int curpointer=0;
-        for(auto p : color1){
-            while(curpointer<V.size()&&V[curpointer][0]<=p.first){
-                if(V[curpointer][1]==1) S.insert(V[curpointer][2]);
-                else S.erase(V[curpointer][2]);
-                curpointer++;
-            }
-            auto it=S.lower_bound(p.second);
-            if(it!=S.begin()){
-                int a=*prev(it);
-                if(abs(a-p.second)<=mid){
+        for(auto x : X){
+            seg.clear();
+            seg.resize(K*4+5);
+            for(auto arr : V){
+                if(arr[0]<x||x+mid<arr[0]) continue;
+                update(1, 1, K, arr[2], arr[1]);
+                if(query(1, 1, K, 1, K)>max(0ll, arr[1]-mid-1)){
                     flag=1;
                     break;
                 }
             }
-            if(it!=S.end()){
-                int a=*it;
-                if(abs(a-p.second)<=mid){
-                    flag=1;
-                    break;
-                }
-            }
+            if(flag==1) break;
         }
-        if(flag==1){
+        if(flag){
             ans=min(ans, mid);
             right=mid-1;
         }
-        else left=mid+1;
+        else{
+            left=mid+1;
+        }
     }
-
     cout << ans;
 
     return 0;
