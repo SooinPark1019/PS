@@ -46,6 +46,10 @@ const double PI = acos(-1);
 bfs로 각 정점의 거리를 계산
 각 간선(A, B)에 대해서 dis[a]+1=dis[b]면 a->b인 간선을 추가
 위상 정렬 느낌으로 ㄱㄱ
+
+생각을 다시 좀 해보면
+결국 각 정점에 대해서 인접한 정점 중 거리 최솟값+1만큼이 거리가 되는 건데
+그러면 맞는거 아닌가
 */
 
 vector<int> graph[100005];
@@ -53,6 +57,7 @@ vector<int> graph2[100005];
 int indegree[100005];
 int dis[100005];
 pii edge[200005];
+map<pii, int> used;
 
 signed main(){
     ios::sync_with_stdio(false);
@@ -100,10 +105,11 @@ signed main(){
         cin >> a;
         int s=edge[a].first, e=edge[a].second;
         if(dis[s]==dis[e]+1) swap(s, e);
-        if(dis[s]+1!=dis[e]){
+        if(dis[s]+1!=dis[e]||used[{s, e}]){
             cout << ans << "\n";
             continue;
         }
+        used[{s, e}]=1;
         indegree[e]--;
         if(indegree[e]==0){
             Q.push(e);
@@ -112,6 +118,8 @@ signed main(){
                 Q.pop();
                 ans++;
                 for(auto j : graph2[x]){
+                    if(used[{x, j}]) continue;
+                    used[{x, j}]=1;
                     indegree[j]--;
                     if(indegree[j]==0){
                         Q.push(j);
