@@ -52,7 +52,7 @@ vector<int> graph[100005];
 vector<int> graph2[100005];
 int indegree[100005];
 int dis[100005];
-pii edge[100005];
+pii edge[200005];
 
 signed main(){
     ios::sync_with_stdio(false);
