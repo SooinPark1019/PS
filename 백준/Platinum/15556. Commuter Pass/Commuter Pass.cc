@@ -73,14 +73,20 @@ void fill_dis(int start, int dis[100005]){
     }
 }
 int ans=1e18;
-pii dfs(int node){
+pii DP[100005];
+pii dfs(int node, int curdis){
     //cout << "node : " << node << endl;
-    int a=disfromU[node];
-    int b=disfromV[node];
+    int& a=DP[node].first;
+    int& b=DP[node].second;
+    if(a!=-1&&b!=-1){
+        return {a, b};
+    }
+    a=disfromU[node];
+    b=disfromV[node];
     for(auto p : graph[node]){
         //cout << p.first << " " << p.second << " " << p.second << " " << disfromS[node] << " " << disfromT[p.first] << endl;
-        if(p.second+disfromS[node]+disfromT[p.first]==disfromS[T]){
-            pii temp=dfs(p.first);
+        if(p.second+curdis+disfromT[p.first]==disfromS[T]){
+            pii temp=dfs(p.first, curdis+p.second);
             a=min(a, temp.first);
             b=min(b, temp.second);
         }
@@ -111,7 +117,9 @@ signed main(){
 
     ans=disfromU[V];
 
-    dfs(S);
+    for(int i=0; i<=N; i++) DP[i]={-1, -1};
+
+    dfs(S, 0);
     cout << ans;
 
     return 0;
