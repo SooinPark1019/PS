@@ -1,9 +1,9 @@
 #include <ext/rope>
 #include <bits/stdc++.h>
 #define _USE_MATH_DEFINES
-#pragma GCC optimize ("O3")
-#pragma GCC optimize ("Ofast")
-#pragma GCC optimize ("unroll-loops")
+//#pragma GCC optimize ("O3")
+//#pragma GCC optimize ("Ofast")
+//#pragma GCC optimize ("unroll-loops")
 #define pii pair<int,int>
 #define pll pair<ll,ll>
 #define PB push_back
@@ -14,7 +14,7 @@
 //#define sz(x) (int)x.size()
 #include <ext/pb_ds/assoc_container.hpp>
 #include <ext/pb_ds/tree_policy.hpp>
-//#define int long long
+#define int long long
 
 using namespace std;
 
@@ -105,34 +105,103 @@ min(seg[1], seg[2], ... seg[k])가 0이 아닌 애들의 개수
 
 결국 어떤 점을 '벗어나면' 해당 원소에 대해서 구간들에 갱신이 이루어진다고 볼 수도 있을듯
 */
-
-int pointer[100005];
-vector<int> indexa[100005];
-int cnt[5][100005];
-
 int N, K;
+vector<vector<pii>> seg(16, vector<pii>(100005 * 4, {0, 0}));
+vector<vector<int>> lazy(16, vector<int>(100005 * 4, 0));
 
-int check(int cur){
-    for(int i=1; i<=K; i++){
-        if(cnt[i][cur]==0) return 0;
+pii merge(pii A, pii B){
+    if(A.first>B.first) swap(A, B);
+    if(A.first==B.first){
+        return {A.first, A.second+B.second};
     }
-    return 1;
+    return A;
 }
-ll cur=0;
-ll ans=0;
-void sol(int num, int pointer, int val){
+
+void lazyupdate(int node, int start, int end, int a){
+    if(lazy[a][node]!=0){
+        seg[a][node].first+=lazy[a][node];
+        if(start!=end){
+            lazy[a][node*2]+=lazy[a][node];
+            lazy[a][node*2+1]+=lazy[a][node];
+        }
+        lazy[a][node]=0;
+    }
+}
+
+void make_seg(int node, int start, int end, int a){
+    if(start==end) seg[a][node]={0, 1};
+    else{
+        int mid=(start+end)>>1;
+        make_seg(node*2, start, mid, a);
+        make_seg(node*2+1, mid+1, end, a);
+        seg[a][node]=merge(seg[a][node*2], seg[a][node*2+1]);
+    }
+}
+
+void update(int node, int start, int end, int left, int right, int a, int val){
+    //cout << "start : " << start << " end : " << end << " left : " << left << " right : " << right << " a : " << a << " val : " << val << "\n";
+    lazyupdate(node, start, end, a);
+    if(right<start||end<left) return;
+    else if(left<=start&&end<=right){
+        lazy[a][node]+=val;
+        lazyupdate(node, start, end, a);
+    }
+    else{
+        int mid=(start+end)/2;
+        update(node*2, start, mid, left, right, a, val);
+        update(node*2+1, mid+1, end, left, right, a, val);
+        seg[a][node]=merge(seg[a][node*2], seg[a][node*2+1]);
+    }
+    return;
+}
+
+pii query(int node, int start, int end, int left, int right, int a){
+    lazyupdate(node, start, end, a);
+    if(right<start||end<left) return {1e18, 0};
+    if(left<=start&&end<=right) return seg[a][node];
+    int mid=(start+end)>>1;
+    return merge(query(node*2, start, mid, left, right, a), query(node*2+1, mid+1, end, left, right, a));
+}
+
+vector<int> indexa[100005];
+int curpos[100005];
+void sol(int a, int val){
+    int x=curpos[a];
     for(int i=0; i<K; i++){
-        if(pointer+i+1>=indexa[num].size()) break;
-        for(int j=indexa[num][pointer+i]; j<indexa[num][pointer+i+1]; j++){
-            int a=check(j);
-            cnt[i+1][j]+=val;
-            int b=check(j);
-            if(a==1&&b==0) cur--;
-            if(a==0&&b==1) cur++;
+        if(x+i+1>=indexa[a].size()) break;
+        int left=indexa[a][x+i];
+        int right=indexa[a][x+i+1]-1;
+        for(int j=1; j<(1<<K); j++){
+            if((j&(1<<i))) update(1, 0, N-1, left, right, j, val);
         }
     }
 }
-
+int cal(){
+    int ret=0;
+    vector<int> temp(K+1);
+    for(int i=1; i<(1<<K); i++){
+        int a=__builtin_popcount(i);
+        pii A=query(1, 0, N-1, 0, N-1, i);
+        //cout << "i : " << i << " seg.first : " << A.first << " seg.second : " << A.second << "\n";
+        if(A.first!=0) temp[a]+=N;
+        else temp[a]+=N-A.second;
+    }
+    if(K==1){
+        return temp[1];
+    }
+    else if(K==2){
+        return temp[1]-temp[2];
+    }
+    else if(K==3){
+        int a=temp[1]*2-temp[2];
+        return temp[3]-temp[1]+a;
+    }
+    else{
+        int a=temp[1]*3-temp[2];
+        int b=temp[3]-3*temp[1]+2*a;
+        return temp[1]-a+b-temp[4];
+    }
+}
 signed main(){
     ios::sync_with_stdio(false);
     cin.tie(NULL);
@@ -140,25 +209,32 @@ signed main(){
 
     cin >> N >> K;
     vector<int> V;
+
+    for(int i=1; i<(1<<K); i++){
+        make_seg(1, 0, N-1, i);
+    }
+
     for(int i=0; i<N; i++){
         int a;
         cin >> a;
         indexa[a].push_back(i);
         V.push_back(a);
     }
+
     for(int i=1; i<=N; i++){
         indexa[i].push_back(N);
     }
 
     for(int i=1; i<=N; i++){
-        sol(i, pointer[i], 1);
+        sol(i, 1);
     }
-    ans+=cur;
+    int ans=0;
+    ans+=cal();
     for(int i=0; i<N; i++){
-        sol(V[i], pointer[V[i]], -1);
-        pointer[V[i]]++;
-        sol(V[i], pointer[V[i]], 1);
-        ans+=cur;
+        sol(V[i], -1);
+        curpos[V[i]]++;
+        sol(V[i], 1);
+        ans+=cal();
     }
 
     cout << ans;
