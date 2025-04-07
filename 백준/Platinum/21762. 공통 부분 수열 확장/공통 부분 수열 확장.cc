@@ -63,13 +63,25 @@ signed main(){
         int flag=0;
         int firstpointer=0;
         int secondpointer=0;
+
+        vector<int> firststack;
+        vector<int> secondstack;
+
+        firststack.push_back(-1);
+        secondstack.push_back(-1);
         
         while(firstpointer<W.length()){
-            if(X[firstleft]==W[firstpointer]) firstpointer++;
+            if(X[firstleft]==W[firstpointer]){
+                firststack.push_back(firstleft);
+                firstpointer++;
+            }
             firstleft++;
         }
         while(secondpointer<W.length()){
-            if(Y[secondleft]==W[secondpointer]) secondpointer++;
+            if(Y[secondleft]==W[secondpointer]){
+                secondstack.push_back(secondleft);
+                secondpointer++;
+            }
             secondleft++;
         }
         for(int i=firstleft; i<=firstright; i++){
@@ -77,10 +89,14 @@ signed main(){
         }
         for(int i=secondleft; i<=secondright; i++){
             secondM[Y[i]]++;
-            if(secondM[Y[i]]==1&&firstM[Y[i]]>0) flag=1;
         }
 
         //cout << "fl : " << firstleft << " fr : " << firstright << " sl : " << secondleft << " " << " sr : " << secondright << " flag : " << flag << "\n";
+
+        for(int i=0; i<26; i++){
+            char c=i+'a';
+            if(firstM[c]>0&&secondM[c]>0) flag=1;
+        }
 
         while(firstpointer>0){
             firstpointer--;
@@ -100,25 +116,19 @@ signed main(){
                 }
                 secondright--;
             }
-            firstleft--;
-            firstM[X[firstleft]]++;
-            if(firstM[X[firstleft]]==1&&secondM[X[firstleft]]>0) flag=1;
-            secondleft--;
-            secondM[Y[secondleft]]++;
-            if(secondM[Y[secondleft]]==1&&firstM[Y[secondleft]]>0) flag=1;
-            char c;
-            if(firstpointer>0) c=W[firstpointer-1];
-            else c='$';
-            //cout << c << "\n";
-            while(firstleft>0&&X[firstleft-1]!=c){
+            firststack.pop_back();
+            secondstack.pop_back();
+            while(firstleft!=firststack.back()+1){
                 firstleft--;
                 firstM[X[firstleft]]++;
-                if(firstM[X[firstleft]]==1&&secondM[X[firstleft]]>0) flag=1;
             }
-            while(secondleft>0&&Y[secondleft-1]!=c){
+            while(secondleft!=secondstack.back()+1){
                 secondleft--;
                 secondM[Y[secondleft]]++;
-                if(secondM[Y[secondleft]]==1&&firstM[Y[secondleft]]>0) flag=1;
+            }
+            for(int i=0; i<26; i++){
+                char c=i+'a';
+                if(firstM[c]>0&&secondM[c]>0) flag=1;
             }
             //cout << "fl : " << firstleft << " fr : " << firstright << " sl : " << secondleft << " " << " sr : " << secondright << " flag : " << flag << "\n";
         }
