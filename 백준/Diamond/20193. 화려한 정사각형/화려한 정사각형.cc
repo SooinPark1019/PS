@@ -46,32 +46,47 @@ const double PI = acos(-1);
 */
 
 vector<int> seg;
+vector<int> lazy;
 
-void update(int node, int start, int end, int index, int val){
-    if(index<start||end<index) return;
-    if(start==end){
-        seg[node]=val;
+void lazyupdate(int node, int start, int end){
+    if(lazy[node]!=0){
+        seg[node]+=lazy[node];
+        if(start!=end){
+            lazy[node*2]+=lazy[node];
+            lazy[node*2+1]+=lazy[node];
+        }
+        lazy[node]=0;
+    }
+}
+
+void update(int node, int start, int end, int left, int right, int value){
+    lazyupdate(node, start, end);
+    if(right<start||end<left) return;
+    else if(left<=start&&end<=right){
+        lazy[node]+=value;
+        lazyupdate(node, start, end);
     }
     else{
         int mid=(start+end)>>1;
-        update(node*2, start, mid, index, val);
-        update(node*2+1, mid+1, end, index, val);
-        seg[node]=min(seg[node*2], seg[node*2+1]);
+        update(node*2, start, mid, left, right, value);
+        update(node*2+1, mid+1, end, left, right, value);
+        seg[node]=max(seg[node*2], seg[node*2+1]);
     }
 }
 
 int query(int node, int start, int end, int left, int right){
-    if(end<left||right<start) return 1e18;
-    else if(left<=start&&end<=right) return seg[node];
+    lazyupdate(node, start, end);
+    if(right<start||end<left) return 0;
+    else if(left<=start&&end<=right){
+        return seg[node];
+    }
     else{
         int mid=(start+end)>>1;
-        return min(query(node*2, start, mid, left, right), query(node*2+1, mid+1, end, left, right));
+        return max(query(node*2, start, mid, left, right), query(node*2+1, mid+1, end, left, right));
     }
 }
 
-bool compare(array<int, 3> A, array<int, 3> B){
-    return A[1]<B[1];
-}
+multiset<int> intervalstarts[100005];
 
 signed main(){
     ios::sync_with_stdio(false);
@@ -80,109 +95,81 @@ signed main(){
 
     int N, K;
     cin >> N >> K;
-
-    if(K==2){
-        vector<pii> color1;
-        vector<pii> color2;
-
-        for(int i=0; i<N; i++){
-            int x, y, c;
-            cin >> x >> y >> c;
-            if(c==1) color1.push_back({x, y});
-            else color2.push_back({x, y});
-        }
-
-        sort(all(color1));
-        sort(all(color2));
-
-        int left=0;
-        int right=250000;
-        int ans=1e18;
-
-        while(left<=right){
-            int mid=(left+right)>>1;
-            int flag=0;
-            set<int> S;
-            vector<array<int, 3>> V;
-            for(auto p : color2){
-                V.push_back({max(0ll, p.first-mid), 1, p.second});
-                V.push_back({p.first+mid+1, -1, p.second});
-            }
-            sort(all(V));
-            int curpointer=0;
-            for(auto p : color1){
-                while(curpointer<V.size()&&V[curpointer][0]<=p.first){
-                    if(V[curpointer][1]==1) S.insert(V[curpointer][2]);
-                    else S.erase(V[curpointer][2]);
-                    curpointer++;
-                }
-                auto it=S.lower_bound(p.second);
-                if(it!=S.begin()){
-                    int a=*prev(it);
-                    if(abs(a-p.second)<=mid){
-                        flag=1;
-                        break;
-                    }
-                }
-                if(it!=S.end()){
-                    int a=*it;
-                    if(abs(a-p.second)<=mid){
-                        flag=1;
-                        break;
-                    }
-                }
-            }
-            if(flag==1){
-                ans=min(ans, mid);
-                right=mid-1;
-            }
-            else left=mid+1;
-        }
-
-        cout << ans;
-        return 0;
-    }
-
     vector<array<int, 3>> V;
-    vector<int> X;
-
     for(int i=0; i<N; i++){
-        int x, y, c;
-        cin >> x >> y >> c;
-        V.push_back({x, y, c});
-        X.push_back(x);
+        int a, b, c;
+        cin >> a >> b >> c;
+        V.push_back({a, b, c});
     }
-
-    sort(all(V), compare);
-    zip(X);
-
+    sort(all(V));
     int left=0;
     int right=250000;
     int ans=250000;
     while(left<=right){
         int mid=(left+right)>>1;
+        //cout << "mid : " << mid << endl;
+        for(int i=1; i<=K; i++){
+            intervalstarts[i].clear();
+        }
+        seg.clear();
+        lazy.clear();
+        seg.resize(250005*4);
+        lazy.resize(250005*4);
+
+        vector<array<int, 4>> queries;
+
+        for(auto a : V){
+            queries.push_back({a[0], 1, a[1], a[2]});
+            queries.push_back({a[0]+mid+1, -1, a[1], a[2]});
+        }
+
+        sort(all(queries));
+
         int flag=0;
-        for(auto x : X){
-            seg.clear();
-            seg.resize(K*4+5);
-            for(auto arr : V){
-                if(arr[0]<x||x+mid<arr[0]) continue;
-                update(1, 1, K, arr[2], arr[1]);
-                if(query(1, 1, K, 1, K)>max(0ll, arr[1]-mid-1)){
-                    flag=1;
-                    break;
+        int curpointer=0;
+        for(int i=1; i<=250000; i++){
+            while(curpointer<queries.size()&&queries[curpointer][0]==i){
+                int type=queries[curpointer][1];
+                int start=queries[curpointer][2];
+                int end=queries[curpointer][2]+mid;
+                int color=queries[curpointer][3];
+                //cout << "x : " << queries[curpointer][0] << " type : " << type << " start : " << start << " end : " << end << " color " << color << "\n";
+                if(type==-1){
+                    intervalstarts[color].erase(intervalstarts[color].find(start));
                 }
+                auto it=intervalstarts[color].lower_bound(start);
+                int start2=start;
+                int end2=end;
+                if(it!=intervalstarts[color].begin()){
+                    auto it2=prev(it);
+                    start2=max(start2, *it2+mid+1);
+                }
+                if(it!=intervalstarts[color].end()){
+                    int a=*it;
+                    end2=min(end2, a-1);
+                }
+                //cout << start2 << " " << end2 << "\n";
+                if(start2<=end2) update(1, 1, 250000, start2, end2, type);
+                if(type==1){
+                    intervalstarts[color].insert(start);
+                }
+                curpointer++;
             }
-            if(flag==1) break;
+            //if(mid==5&&i<10) cout << "query : " << query(1, 1, 250000, 1, 250000) << " " << query(1, 1, 250000, 8, 8) << "\n";
+            if(query(1, 1, 250000, 1, 250000)==K){
+                flag=1;
+                break;
+            }
         }
         if(flag){
-            ans=min(ans, mid);
             right=mid-1;
+            ans=min(ans, mid);
         }
         else{
             left=mid+1;
         }
     }
+
     cout << ans;
 
     return 0;
