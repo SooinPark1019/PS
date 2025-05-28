@@ -14,7 +14,7 @@
 //#define sz(x) (int)x.size()
 #include <ext/pb_ds/assoc_container.hpp>
 #include <ext/pb_ds/tree_policy.hpp>
-#define int long long
+//#define int long long
 
 using namespace std;
 
@@ -45,102 +45,122 @@ const int FLAG_DEBUG = 0;
 
 /*
 */
-vector<pii> seg;
-vector<int> lazy;
-pii merge(pii A, pii B){
-    if(A.first<B.first) return A;
-    else if(A.first>B.first) return B;
-    return {A.first, A.second+B.second};
-}
-void init(int node, int start, int end){
-    if(start==end) seg[node]={0, 1};
-    else{
-        int mid=(start+end)>>1;
-        init(node*2, start, mid);
-        init(node*2+1, mid+1, end);
-        seg[node]=merge(seg[node*2], seg[node*2+1]);
-    }
-}
-void lazyupdate(int node, int start, int end){
-    if(lazy[node]){
-        seg[node].first+=lazy[node];
-        if(start!=end){
-            lazy[node*2]+=lazy[node];
-            lazy[node*2+1]+=lazy[node];
+int left_nearest[4005][4005], right_nearest[4005][4005], up_nearest[4005][4005], down_nearest[4005][4005], tree[4005][4005];
+int H, W, L, P;
+void fill_left(){
+    for(int i=1; i<=H; i++){
+        int last_tree=0;
+        for(int j=1; j<=W; j++){
+            if(tree[i][j]) last_tree=j;
+            left_nearest[i][j]=abs(j-last_tree);
         }
-        lazy[node]=0;
     }
 }
-void update(int node, int start, int end, int left, int right, int value){
-    lazyupdate(node, start, end);
-    if(right<start||end<left) return;
-    if(left<=start&&end<=right){
-        lazy[node]+=value;
-        lazyupdate(node, start, end);
-    }
-    else{
-        int mid=(start+end)>>1;
-        update(node*2, start, mid, left, right, value);
-        update(node*2+1, mid+1, end, left, right, value);
-        seg[node]=merge(seg[node*2], seg[node*2+1]);
+void fill_right(){
+    for(int i=1; i<=H; i++){
+        int last_tree=W+1;
+        for(int j=W; j>=1; j--){
+            if(tree[i][j]) last_tree=j;
+            right_nearest[i][j]=abs(j-last_tree);
+        }
     }
 }
-pii query(int node, int start, int end, int left, int right){
-    lazyupdate(node, start, end);
-    if(right<start||end<left) return {1e18, 0};
-    if(left<=start&&end<=right) return seg[node];
-    int mid=(start+end)>>1;
-    return merge(query(node*2, start, mid, left, right), query(node*2+1, mid+1, end, left, right));
+void fill_up(){
+    for(int j=1; j<=W; j++){
+        int last_tree=0;
+        for(int i=1; i<=H; i++){
+            if(tree[i][j]) last_tree=i;
+            up_nearest[i][j]=abs(i-last_tree);
+        }
+    }
+}
+void fill_down(){
+    for(int j=1; j<=W; j++){
+        int last_tree=H+1;
+        for(int i=H; i>=1; i--){
+            if(tree[i][j]) last_tree=i;
+            down_nearest[i][j]=abs(i-last_tree);
+        }
+    }
+}
+void print_nearest(int arr[4005][4005]){
+    for(int i=1; i<=H; i++){
+        for(int j=1; j<=W; j++){
+            cout << arr[i][j] << " ";
+        }
+        cout << "\n";
+    }
+}
+vector<int> Fenwick;
+void update(int index, int value){
+    while(index<=4000){
+        Fenwick[index]+=value;
+        index+=index&(-index);
+    }
+}
+int query(int index){
+    int ret=0;
+    while(index>0){
+        ret+=Fenwick[index];
+        index-=index&(-index);
+    }
+    return ret;
 }
 signed main(){
     ios::sync_with_stdio(false);
     cin.tie(NULL);
     cout.tie(NULL);
 
-    int H, W, L, P;
     cin >> H >> W >> L >> P;
-
-    vector<pii> trees;
 
     for(int i=0; i<P; i++){
         int x, y;
         cin >> x >> y;
-        trees.push_back({x, y});
+        tree[x][y]=1;
     }
-    int ans=0;
-    for(int i=L; i<=min(H, W); i++){
-        seg.clear();
-        lazy.clear();
-        seg.resize(W*4+5);
-        lazy.resize(W*4+5, 0);
-        init(1, 1, W);
 
-        //cout << query(1, 1, W, 1, W).first << " " << query(1, 1, W, 1, W).second << "\n";
+    fill_left();
+    fill_right();
+    fill_up();
+    fill_down();
 
-        vector<array<int, 4>> V;
-        for(auto p : trees){
-            if(p.first-i+1>=1){
-                V.push_back({p.first-i+1, max(1ll, p.second-i+1), p.second, 1});
-                V.push_back({max(1ll, p.first-i+2), max(1ll, p.second-i+2), max(1ll, p.second-1), -1});
-            }
-            else{
-                if(p.second-i+1>=1) V.push_back({1, p.second-i+1, p.second-i+1, 1});
-                V.push_back({1, p.second, p.second, 1});
-            }
-            V.push_back({p.first, max(1ll, p.second-i+2), max(1ll, p.second-1), 1});
-            if(p.first+1<=H) V.push_back({p.first+1, max(1ll, p.second-i+1), p.second, -1});
+    if(FLAG_DEBUG){
+        print_nearest(left_nearest);
+        print_nearest(right_nearest);
+        print_nearest(up_nearest);
+        print_nearest(down_nearest);
+        cout << endl;
+    }
+    ll ans=0;
+    for(int k=-H+1; k<=W-1; k++){
+        //cout << "k : " << k << "\n";
+        Fenwick.clear();
+        Fenwick.resize(4005, 0);
+        vector<pii> temp;
+        for(int i=1; i<=H; i++){
+            int j=i+k;
+            //cout << "i : " << i << " j : " << j << "\n";
+            if(j<=0||j>W) continue;
+            temp.push_back({j-min(left_nearest[i][j], up_nearest[i][j]), j});
+            //cout << "temp.back : " << temp.back().first << " " << temp.back().second << "\n";
         }
-
-        sort(all(V));
-
+        sort(all(temp));
         int curpointer=0;
-        for(int j=1; j<=H-i+1; j++){
-            while(curpointer<V.size()&&V[curpointer][0]==j){
-                update(1, 1, W, V[curpointer][1], V[curpointer][2], V[curpointer][3]);
+        for(int i=1; i<=H; i++){
+            int j=i+k;
+            //cout << "i : " << i << " j : " << j << "\n";
+            if(j<=0||j>W) continue;
+            while(curpointer<temp.size()&&temp[curpointer].first<j){
+                //cout << "add : " << temp[curpointer].second << "\n";
+                update(temp[curpointer].second, 1);
                 curpointer++;
             }
-            pii res=query(1, 1, W, 1, W-i+1);
-            if(!res.first) ans+=res.second;
+            int left=j+L-2;
+            int right=min(j+min(right_nearest[i][j], down_nearest[i][j])-1, 4000);
+            if(left>=right) continue;
+            //cout << "left : " << left << " right : " << right << "\n";
+            ans+=query(right)-query(left);
+            //cout << "ans : " << ans << "\n";
         }
     }
 
