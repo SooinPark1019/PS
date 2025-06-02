@@ -1,9 +1,9 @@
 #include <ext/rope>
 #include <bits/stdc++.h>
 #define _USE_MATH_DEFINES
-//#pragma GCC optimize ("O3")
-//#pragma GCC optimize ("Ofast")
-//#pragma GCC optimize ("unroll-loops")
+#pragma GCC optimize ("O3")
+#pragma GCC optimize ("Ofast")
+#pragma GCC optimize ("unroll-loops")
 #define pii pair<int,int>
 #define pll pair<ll,ll>
 #define PB push_back
@@ -56,7 +56,7 @@ PBDS?
 2^(i+1)로 나눈 나머지를 생각
 */
 
-signed main(){
+int main(){
     ios::sync_with_stdio(false);
     cin.tie(NULL);
     cout.tie(NULL);
@@ -73,19 +73,27 @@ signed main(){
     }
     for(int i=0; i<=30; i++){
         //cout << "i : " << i << "\n";
-        ordered_set OS;
+        vector<int> temp;
         ll cnt=0;
         for(int j=0; j<N; j++){
             int a=V[j]%(1ll<<(i+1));
+            temp.push_back(a);
             //cout << "a : " << a << "\n";
-            OS.insert(a);
-            if((a&(1ll<<i))){
-                cnt+=OS.order_of_key((1ll<<(i+1))-a);
-                cnt+=OS.size()-OS.order_of_key((1ll<<(i+1))+(1ll<<(i))-a);
+        }
+        sort(all(temp));
+        vector<int> temp2;
+        for(int j=0; j<N; j++){
+            int a=temp[j];
+            temp2.push_back(a);
+            //cout << "a : " << a << "\n";
+            if((a&(1<<i))){
+                cnt+=lower_bound(all(temp2), (1ll<<(i+1))-a)-temp2.begin();
+                cnt+=j+1-(lower_bound(all(temp2), (1ll<<(i+1))+(1<<(i))-a)-temp2.begin());
                 //cout << cnt << "\n";
             }
             else{
-                cnt+=OS.order_of_key((1ll<<(i+1))-a)-OS.order_of_key((1ll<<(i))-a);
+                cnt+=lower_bound(all(temp2), (1ll<<(i+1))-a)-temp2.begin();
+                cnt-=lower_bound(all(temp2), (1<<(i))-a)-temp2.begin();
                 //cout << cnt << "\n";
             }
         }
