@@ -51,9 +51,12 @@ const int FLAG_DEBUG = 0;
 */
 
 int arr[3005][3005];
-int rowdir[3005][3005];
-int coldir[3005][3005];
-int curnode=0;
+bool check(int x, int y, int dx, int dy){
+    for(int i=0; i<3; i++){
+        if(arr[x+i*dx][y+i*dy]!=i) return false;
+    }
+    return true;
+}
 signed main(){
     ios::sync_with_stdio(false);
     cin.tie(NULL);
@@ -62,94 +65,55 @@ signed main(){
     int N, M;
     cin >> N >> M;
 
+    map<char, int> dict;
+    dict['R']=0;
+    dict['G']=1;
+    dict['W']=2;
+
     for(int i=0; i<N; i++){
         for(int j=0; j<M; j++){
             char c;
             cin >> c;
-            if(c=='R') arr[i][j]=0;
-            else if(c=='G') arr[i][j]=1;
-            else arr[i][j]=2;
+            arr[i][j]=dict[c];
         }
     }
-
-    for(int i=0; i<N; i++){
-        for(int j=0; j<M-2; j++){
-            if(arr[i][j]==0&&arr[i][j+1]==1&&arr[i][j+2]==2){
-                curnode++;
-                rowdir[i][j]=curnode;
-            }
-        }
-    }
-
-    for(int i=0; i<N-2; i++){
-        for(int j=0; j<M; j++){
-            if(arr[i][j]==0&&arr[i+1][j]==1&&arr[i+2][j]==2){
-                curnode++;
-                coldir[i][j]=curnode;
-            }
-        }
-    }
-
-    // for(int i=0; i<N; i++){
-    //     for(int j=0; j<M; j++){
-    //         cout << rowdir[i][j] << " ";
-    //     }
-    //     cout << "\n";
-    // }
-
-    // cout << "\n";
-
-    // for(int i=0; i<N; i++){
-    //     for(int j=0; j<M; j++){
-    //         cout << coldir[i][j] << " ";
-    //     }
-    //     cout << "\n";
-    // }
-
-    // cout << "\n";
-
-    vector<vector<int>> graph(curnode+1, vector<int>());
-
-    for(int i=0; i<N; i++){
-        for(int j=0; j<M; j++){
-            if(rowdir[i][j]){
-                if(coldir[i][j]){
-                    graph[rowdir[i][j]].push_back(coldir[i][j]);
-                    graph[coldir[i][j]].push_back(rowdir[i][j]);
-                }
-                if(i>0&&coldir[i-1][j+1]){
-                    graph[rowdir[i][j]].push_back(coldir[i-1][j+1]);
-                    graph[coldir[i-1][j+1]].push_back(rowdir[i][j]);
-                }
-                if(i>1&&coldir[i-2][j+2]){
-                    graph[rowdir[i][j]].push_back(coldir[i-2][j+2]);
-                    graph[coldir[i-2][j+2]].push_back(rowdir[i][j]);
-                }
-            }
-        }
-    }
-
-    vector<int> vis(curnode+1);
     int ans=0;
-    for(int i=1; i<=curnode; i++){
-        if(vis[i]) continue;
+    for(int i=0; i<=N-1+M-1; i++){
         int temp=0;
-        queue<int> Q;
-        Q.push(i);
-        vis[i]=1;
-        while(!Q.empty()){
-            int x=Q.front();
-            Q.pop();
-            temp++;
-            for(auto j : graph[x]){
-                if(vis[j]) continue;
-                vis[j]=1;
-                Q.push(j);
+        int DP[3005][5][2]={};
+        for(int x=0; x<N; x++){
+            int y=i-x;
+            if(y<0||y>=M) continue;
+            //cout << "x : " << x << " y : " << y << "\n";
+            if(x+2<N&&check(x, y, 1, 0)){
+                //cout << "dirx\n";
+                DP[x+1][1][0]=max({DP[x+1][1][0], DP[x][0][1]+1, DP[x][1][1]+1, DP[x][2][1]+1, DP[x][0][0]+1, DP[x][1][0]+1, DP[x][2][0]+1});
+            }
+            if(y+2<M&&check(x, y, 0, 1)){
+                //cout << "diry\n";
+                DP[x+1][1][1]=max({DP[x+1][1][1], DP[x][0][0]+1, DP[x][0][1]+1, DP[x][1][1]+1, DP[x][2][1]+1});
+            }
+            for(int k=0; k<3; k++){
+                if(k==0){
+                    DP[x+1][0][1]=max(DP[x+1][0][1], DP[x][0][1]);
+                    DP[x+1][0][0]=max(DP[x+1][0][0], DP[x][0][0]);
+                }
+                else{
+                    DP[x+1][(k+1)%3][0]=max(DP[x+1][(k+1)%3][0], DP[x][k][0]);
+                    DP[x+1][(k+1)%3][1]=max(DP[x+1][(k+1)%3][1], DP[x][k][1]);
+                }
+            }
+            for(int a=0; a<3; a++){
+                for(int b=0; b<2; b++){
+                    //cout << "a : " << a << " b : " << b << " DP : " << DP[x+1][a][b] << "\n";
+                    temp=max(temp, DP[x+1][a][b]);
+                }
             }
         }
-        ans+=(temp+1)/2;
+        //cout << i << " " << temp << "\n";
+        ans+=temp;
     }
-
+    
     cout << ans;
 
     return 0;
