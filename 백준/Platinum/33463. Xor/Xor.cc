@@ -18,14 +18,14 @@
 
 using namespace std;
 
-using namespace __gnu_pbds;
-using namespace __gnu_cxx;
-#define ordered_set tree<int, null_type, less_equal<int>, rb_tree_tag,tree_order_statistics_node_update>//이걸 코드의 윗부분에 추가
-void m_erase(ordered_set &OS, int val){
-    int index = OS.order_of_key(val);
-    ordered_set::iterator it = OS.find_by_order(index);
-    if(*it == val) OS.erase(it);
-}
+// using namespace __gnu_pbds;
+// using namespace __gnu_cxx;
+// #define ordered_set tree<int, null_type, less_equal<int>, rb_tree_tag,tree_order_statistics_node_update>//이걸 코드의 윗부분에 추가
+// void m_erase(ordered_set &OS, int val){
+//     int index = OS.order_of_key(val);
+//     ordered_set::iterator it = OS.find_by_order(index);
+//     if(*it == val) OS.erase(it);
+// }
 //다른 건 통상적인 PBDS처럼 사용하면 되지만 erase는 반드시!!! 이 함수를 통해서만 해야 함
 //m_erase(OS, 지울 원소)처럼 사용하면 된다. 꼭 주의하자.
 //얘네 쓰려면 define int long long 꺼라.
@@ -55,7 +55,6 @@ PBDS?
 
 2^(i+1)로 나눈 나머지를 생각
 */
-
 int main(){
     ios::sync_with_stdio(false);
     cin.tie(NULL);
@@ -63,42 +62,41 @@ int main(){
 
     int N;
     cin >> N;
-    vector<int> V;
     ll ans=0;
-
+    vector<int> V(N);
     for(int i=0; i<N; i++){
-        int a;
-        cin >> a;
-        V.push_back(a);
+        cin >> V[i];
     }
     for(int i=0; i<=30; i++){
+        vector<int> temp1;
+        vector<int> temp2;
         //cout << "i : " << i << "\n";
-        vector<int> temp;
         ll cnt=0;
         for(int j=0; j<N; j++){
-            int a=V[j]%(1ll<<(i+1));
-            temp.push_back(a);
-            //cout << "a : " << a << "\n";
+            if(V[j]&(1ll<<i)) temp2.push_back(V[j]);
+            else temp1.push_back(V[j]);
         }
-        sort(all(temp));
-        vector<int> temp2;
+        vector<int> temp;
+        for(auto i : temp1) temp.push_back(i);
+        for(auto i : temp2) temp.push_back(i);
         int curpointer1=0;
         int curpointer2=0;
         int curpointer3=0;
         for(int j=0; j<N; j++){
-            int a=temp[j];
-            temp2.push_back(a);
+            int a=temp[j]%(1ll<<(i+1));
             //cout << "a : " << a << "\n";
+            //cout << (1ll<<i)-a << "\n";
             if(a<(1ll<<i)-a) curpointer1++;
             if(a<(1ll<<(i+1))-a) curpointer2++;
             if(a<(1ll<<(i+1))+(1<<(i))-a) curpointer3++;
-            while(curpointer1>0&&temp2[curpointer1-1]>=(1ll<<(i))-a) curpointer1--;
-            while(curpointer2>0&&temp2[curpointer2-1]>=(1ll<<(i+1))-a) curpointer2--;
-            while(curpointer3>0&&temp2[curpointer3-1]>=(1ll<<(i+1))+(1ll<<(i))-a) curpointer3--;
+            //cout << "cur1 : " << curpointer1 << "\n";
+            while(curpointer1>0&&temp[curpointer1-1]%(1ll<<(i+1))>=(1ll<<(i))-a) curpointer1--;
+            while(curpointer2>0&&temp[curpointer2-1]%(1ll<<(i+1))>=(1ll<<(i+1))-a) curpointer2--;
+            while(curpointer3>0&&temp[curpointer3-1]%(1ll<<(i+1))>=(1ll<<(i+1))+(1ll<<(i))-a) curpointer3--;
             //cout << curpointer1 << " " << curpointer2 << " " << curpointer3 << "\n";
             if((a&(1<<i))){
                 cnt+=curpointer2;
-                cnt+=temp2.size()-curpointer3;
+                cnt+=j+1-curpointer3;
                 //cout << cnt << "\n";
             }
             else{
@@ -109,6 +107,7 @@ int main(){
         }
         //cout << "cnt : " << cnt << "\n";
         ans+=(cnt%2)<<i;
+        V=temp;
     }
 
     cout << ans;
