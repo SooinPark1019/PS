@@ -64,7 +64,7 @@ int main(){
     int N;
     cin >> N;
     vector<int> V;
-    int ans=0;
+    ll ans=0;
 
     for(int i=0; i<N; i++){
         int a;
@@ -82,18 +82,28 @@ int main(){
         }
         sort(all(temp));
         vector<int> temp2;
+        int curpointer1=0;
+        int curpointer2=0;
+        int curpointer3=0;
         for(int j=0; j<N; j++){
             int a=temp[j];
             temp2.push_back(a);
             //cout << "a : " << a << "\n";
+            if(a<(1ll<<i)-a) curpointer1++;
+            if(a<(1ll<<(i+1))-a) curpointer2++;
+            if(a<(1ll<<(i+1))+(1<<(i))-a) curpointer3++;
+            while(curpointer1>0&&temp2[curpointer1-1]>=(1ll<<(i))-a) curpointer1--;
+            while(curpointer2>0&&temp2[curpointer2-1]>=(1ll<<(i+1))-a) curpointer2--;
+            while(curpointer3>0&&temp2[curpointer3-1]>=(1ll<<(i+1))+(1ll<<(i))-a) curpointer3--;
+            //cout << curpointer1 << " " << curpointer2 << " " << curpointer3 << "\n";
             if((a&(1<<i))){
-                cnt+=lower_bound(all(temp2), (1ll<<(i+1))-a)-temp2.begin();
-                cnt+=j+1-(lower_bound(all(temp2), (1ll<<(i+1))+(1<<(i))-a)-temp2.begin());
+                cnt+=curpointer2;
+                cnt+=temp2.size()-curpointer3;
                 //cout << cnt << "\n";
             }
             else{
-                cnt+=lower_bound(all(temp2), (1ll<<(i+1))-a)-temp2.begin();
-                cnt-=lower_bound(all(temp2), (1<<(i))-a)-temp2.begin();
+                cnt+=curpointer2;
+                cnt-=curpointer1;
                 //cout << cnt << "\n";
             }
         }
